@@ -8,6 +8,112 @@ require 'libs/Slim/Slim.php';
 
 $app = new \Slim\Slim();
 
+$app->post('/register', function() use ($app){
+	$allPostVars = $app->request->post();
+	$username = $allPostVars['username'];
+	$password = $allPostVars['password'];
+	$email = $allPostVars['email'];
+
+	$hashedPassword = hash("sha256", "$password");
+	$db = new DbHandler();
+	$result = $db->addNewUser($username,$email,$hashedPassword);
+
+	if($result){
+		$response['resultData'] = '';
+		$response['errorCode'] = 'success';
+		$response['errorDesc'] = '';
+	}else{
+		$response['resultData'] = '';
+		$response['errorCode'] = 'failed create user';
+		$response['errorDesc'] = '';
+	}
+	$httpStatus = 200;
+	echoRespnse($httpStatus, $response);
+});
+
+$app->post('/login', function() use ($app){
+	$allPostVars = $app->request->post();
+	$username = $allPostVars['username'];
+	$password = $allPostVars['password'];
+
+
+	$hashedPassword = hash("sha256", "$password");
+	$db = new DbHandler();
+	$result = $db->login($username,$hashedPassword);
+	if($result != null){
+		$resultData['username'] = $result['username'];
+		$resultData['email'] = $result['email'];
+		$resultData['user_id'] = $result['id'];
+		$response['resultData'] = $resultData;
+		$response['errorCode'] = 'success';
+		$response['errorDesc'] = '';
+	}else{
+		$response['errorCode'] = 'user not found or password wrong';
+		$response['errorDesc'] = 'USER_NOT_FOUND';
+		$response['resultData'] = '';
+	}
+
+
+	$httpStatus = 200;
+	
+	echoRespnse($httpStatus, $response);
+});
+
+$app->post('/tambah-transaksi', function() use ($app){
+	$allPostVars = $app->request->post();
+	$user_id = $allPostVars['user_id'];
+	$account_type = $allPostVars['account_type'];
+	$amount = $allPostVars['amount'];
+	$type = $allPostVars['type'];
+	$information = $allPostVars['information'];
+
+	$db = new DbHandler();
+	$result = $db->addNewTransaction($user_id, $account_type, $type, $amount,$information);
+	if($result != null){
+		$response['resultData'] = '';
+		$response['errorCode'] = 'success';
+		$response['errorDesc'] = '';
+	}else{
+		$response['errorCode'] = 'penambahan transaksi gagal';
+		$response['errorDesc'] = 'TRANSACTION_FAILED';
+		$response['resultData'] = '';
+	}
+
+
+	$httpStatus = 200;
+	
+	echoRespnse($httpStatus, $response);
+});
+
+$app->post('/tambah-rekening', function() use ($app){
+	$allPostVars = $app->request->post();
+	$user_id = $allPostVars['user_id'];
+	$type = $allPostVars['type'];
+	$balance = $allPostVars['balance'];
+
+	$db = new DbHandler();
+	$result = $db->addNewAccount($user_id, $type, $balance);
+	if($result != null){
+		$response['resultData'] = '';
+		$response['errorCode'] = 'success';
+		$response['errorDesc'] = '';
+	}else{
+		$response['errorCode'] = 'penambahan rekening gagal';
+		$response['errorDesc'] = 'ADD_NEW_ACCOUNT_FAILED';
+		$response['resultData'] = '';
+	}
+
+
+	$httpStatus = 200;
+	
+	echoRespnse($httpStatus, $response);
+});
+
+
+
+
+
+
 /**
  * ----------- METHODS WITHOUT AUTHENTICATION ---------------------------------
  */
@@ -42,7 +148,6 @@ $app->post('/hasil', function () use ($app){
  	
 	echoRespnse($httpStatus, $response);
 });
-
 
 $app->post('/pekerjaan', function () {
 	$response = array();
@@ -116,11 +221,11 @@ function echoRespnse($status_code, $response) {
     $app->status($status_code);
 
     // setting response content type to json
-    $app->contentType('text/html');
+    $app->contentType('application/json');
 
 	//print_r($response);
 	//sleep(10);
-    echo ($response);
+    echo (json_encode($response));
 }
 
 
